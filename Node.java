@@ -1,70 +1,72 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Random;
 import java.net.ServerSocket;
 
 public class Node {
-    private Socket client;
     private ServerSocket server;
-    private InetAddress clientIPAddr;
-    private InetAddress serverIPAddr;
-    private int clientPortNumber;
-    private int serverPortNumber;
+    private InetAddress ipAddr;
+    private int portNumber;
+    private int receivedNumberMessage;
 
     // Construtcor for instances that act as both clients and servers
-    public Node(String clientIPAddr, int clientPortNumber,
-    String serverIPAddr, int serverPortNumber) {
+    public Node(String ipAddr, int portNumber) {
         try {
-            this.clientIPAddr = InetAddress.getByName(clientIPAddr);
-            this.clientPortNumber = clientPortNumber;
-            
-            this.serverIPAddr = InetAddress.getByName(serverIPAddr);
-            this.serverPortNumber = serverPortNumber;
-            
-            this.createClientSocket();
+            this.ipAddr = InetAddress.getByName(ipAddr);
+            this.portNumber = portNumber;
         } catch (Exception e) {
             System.out.println(e);
         }
     }
 
-    public String getClientIPAddr() {
-        return this.clientIPAddr.toString();
+    public String getIPAddr() {
+        return this.ipAddr.getHostAddress();
     }
 
-    public String getServerIPAddr() {
-        return this.serverIPAddr.toString();
+    public int getPortNumber() {
+        return this.portNumber;
     }
 
-    public int getClientPortNumber() {
-        return this.clientPortNumber;
+    public ServerSocket getServer() {
+        return this.server;
     }
 
-    public int getServerPortNumber() {
-        return this.serverPortNumber;
+    public int getReceivedNumberMessage() {
+        return this.receivedNumberMessage;
     }
 
-    private void createClientSocket() {
+    public void setReceivedNumberMessage(int receivedNumberMessage) {
+        this.receivedNumberMessage = receivedNumberMessage;
+    }
+
+    private void createServerSocket() {
         try {
-            this.client = new Socket(this.serverIPAddr, this.serverPortNumber, this.clientIPAddr, this.clientPortNumber);
+            this.server = new ServerSocket(this.portNumber);
         } catch (Exception e) {
             System.out.println(e);
         }
     }
 
-    public void sendNumber() {
-        try (InputStreamReader ir = new InputStreamReader(this.client.getInputStream())) {
-            BufferedReader br = new BufferedReader(ir);
+    public void sendNumber(String serverIPAddr, int serverPortNumber) {
+        try (Socket client = new Socket(serverIPAddr, serverPortNumber)) {
+            OutputStreamWriter osw = new OutputStreamWriter(client.getOutputStream());
+            Random random = new Random();
+            int randomInt = random.nextInt(100) + 1;
 
-            StringBuilder sb = new StringBuilder();
-            String response = "";
-            while ((response = br.readLine()) != null) {
-                sb.append(response + "\n");
-            }
+            osw.write(randomInt + "\n");
+            osw.flush();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
 
-            System.out.println(sb.toString());
+    public void receiveNumber() {
+        createServerSocket();
+        try {            
+            ClientHandler ch = new ClientHandler(this);
+            Thread t1 = new Thread(ch);
+            t1.start();
         } catch (Exception e) {
             System.out.println(e);
         }
