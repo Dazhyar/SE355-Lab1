@@ -1,13 +1,18 @@
+import java.net.InetAddress;
+
 public class Main {
     public static void main(String[] args) {
-        Node client = new Node("localhost", "6000", true);
+        String addr;
+        try{
+            addr = InetAddress.getLocalHost().getHostAddress();
+            Node client = new Node(addr, 6000, "time.nist.gov", 13);
+            client.sendNumber();
+            
+                    System.out.println(client.getClientIPAddr());
+                    System.out.println(client.getClientPortNumber());
 
-        System.out.println(client.getClientIPAddr());
-        System.out.println(client.getClientPortNumber());
+        } catch (Exception e) {
 
-        Node server = new Node("localhost", "7000", false);
-
-        System.out.println(server.getServerIPAddr());
-        System.out.println(server.getServerPortNumber());
+        }
     }
 }
